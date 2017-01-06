@@ -40,15 +40,15 @@ for device, pin in pins.items():
 port=serial.Serial("/dev/ttyACM0", baudrate=9600, timeout=0.2)
 
 # Relay states (start "OFF")
-laststate = {"d1": 0,
-  "d2": 0,
-  "d3": 0,
-  "d4": 0}
-currstate = {"d1": 0,
-  "d2": 0,
-  "d3": 0,
-  "d4": 0}
-for device, pin in pins:
+laststate = {"d1": False,
+  "d2": False,
+  "d3": False,
+  "d4": False}
+currstate = {"d1": False,
+  "d2": False,
+  "d3": False,
+  "d4": False}
+for device, pin in pins.items():
   GPIO.output(pin, currstate[device])
   
 print datetime.datetime.now(),"Starting universal remote"
@@ -67,27 +67,28 @@ while True:
   if input=="HOME":
     print datetime.datetime.now(),"Input detected: Home"
     for device in currstate:
-      currstate[device] = 1
+      currstate[device] = True
     
   if input=="ONE":
     print datetime.datetime.now(),"Input detected: Device 1"
-    currstate["d1"] = !laststate["d1"]
+    currstate["d1"] = not laststate["d1"]
     
   if input=="TWO":
     print datetime.datetime.now(),"Input detected: Device 2"
-    currstate["d2"] = !laststate["d2"]
+    currstate["d2"] = not laststate["d2"]
 
   if input=="THREE":
     print datetime.datetime.now(),"Input detected: Device 3"
-    currstate["d3"] = !laststate["d3"]
+    currstate["d3"] = not laststate["d3"]
     
   if input=="FOUR":
     print datetime.datetime.now(),"Input detected: Device 4"
-    currstate["d4"] = !laststate["d4"]
+    currstate["d4"] = not laststate["d4"]
 
   # Check for state change
-  for device, state in currstate:
+  for device, state in currstate.items():
     if currstate[device]!=laststate[device]:
+      print "Turning device",device,"to state",currstate[device]
       laststate[device]=currstate[device]
       GPIO.output(pins[device], currstate[device])
 
