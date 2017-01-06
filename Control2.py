@@ -16,7 +16,11 @@ import datetime
 
 # Settings
 poll_time = 0.1 # Time in seconds between checking for inputs
-switch_pin = 4 # Relay control pin
+# Relay control pins
+pins = {"d1": 4, 
+  "d2": 17,
+  "d3": 27,
+  "d4": 22}
 
 # A function to check for user input and return it
 def checkInput():
@@ -28,15 +32,25 @@ def checkInput():
 GPIO.setwarnings(False) # Disable warnings
 GPIO.setmode(GPIO.BCM) # Pin numbering mode
 
-GPIO.setup(switch_pin, GPIO.OUT) # Set pin modes
+# Set pin modes to output
+for device, pin in pins.items():
+  GPIO.setup(pin, GPIO.OUT)
 
 # Setup serial connection to Arduino
 port=serial.Serial("/dev/ttyACM0", baudrate=9600, timeout=0.2)
 
-# Start "OFF"
-laststate=0
-currstate=0
-GPIO.output(switch_pin, currstate)
+# Relay states (start "OFF")
+laststate = {"d1": 0,
+  "d2": 0,
+  "d3": 0,
+  "d4": 0}
+currstate = {"d1": 0,
+  "d2": 0,
+  "d3": 0,
+  "d4": 0}
+for device, pin in pins:
+  GPIO.output(pin, currstate[device])
+  
 print datetime.datetime.now(),"Starting universal remote"
 
 # Active loop
@@ -50,22 +64,32 @@ while True:
     print datetime.datetime.now(),"Motion detected"
     
   # If remote, analyze input
+  if input=="HOME":
+    print datetime.datetime.now(),"Input detected: Home"
+    for device in currstate:
+      currstate[device] = 1
+    
   if input=="ONE":
     print datetime.datetime.now(),"Input detected: Device 1"
+    currstate["d1"] = !laststate["d1"]
     
   if input=="TWO":
     print datetime.datetime.now(),"Input detected: Device 2"
+    currstate["d2"] = !laststate["d2"]
 
   if input=="THREE":
     print datetime.datetime.now(),"Input detected: Device 3"
+    currstate["d3"] = !laststate["d3"]
     
   if input=="FOUR":
     print datetime.datetime.now(),"Input detected: Device 4"
+    currstate["d4"] = !laststate["d4"]
 
   # Check for state change
-  if currstate!=laststate:
-    laststate=currstate
-    GPIO.output(switch_pin, currstate)
+  for device, state in currstate:
+    if currstate[device]!=laststate[device]:
+      laststate[device]=currstate[device]
+      GPIO.output(pins[device], currstate[device])
 
   # Wait (tuned off because of serial timeout delay)
   #time.sleep(poll_time)
