@@ -25,14 +25,20 @@ void setup()
 void loop() {
   if (irrecv.decode(&results)) {
     remoteSignal=String(results.value, HEX);
-    if (remoteSignal=="e144827d"){
-      Serial.println("POWER");
+    if (remoteSignal=="61a09d62"){ // 'Home' Button
+      Serial.println("HOME");
     }
-    else if (remoteSignal=="e144a25d"){
-      Serial.println("AUTO");
+    else if (remoteSignal=="61a000ff"){ // '1' Button
+      Serial.println("ONE");
     }
-    else if (remoteSignal=="e144629d"){
-      Serial.println("MANUAL");
+    else if (remoteSignal=="61a0807f"){ // '2' Button
+      Serial.println("TWO");
+    }
+    else if (remoteSignal=="61a040bf"){ // '3' Button
+      Serial.println("THREE");
+    }
+    else if (remoteSignal=="61a0c03f"){ // '4' Button
+      Serial.println("FOUR");
     }
     irrecv.resume(); // Receive the next value
   }
