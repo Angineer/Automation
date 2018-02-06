@@ -9,18 +9,11 @@
 
 # Author: Andy Tracy <adtme11@gmail.com>
 
-import RPi.GPIO as GPIO
+import relay_shield
+import fauxmo
 import serial
 import time
 import datetime
-
-# Settings
-poll_time = 0.1 # Time in seconds between checking for inputs
-# Relay control pins
-pins = {"d1": 4, 
-  "d2": 17,
-  "d3": 27,
-  "d4": 22}
 
 # A function to check for user input and return it
 def checkInput():
@@ -28,72 +21,69 @@ def checkInput():
   input=input.strip()
   return input
 
-# Setup GPIO
-GPIO.setwarnings(False) # Disable warnings
-GPIO.setmode(GPIO.BCM) # Pin numbering mode
+# Handler function for fauxmo device
+class local_gpio(object):
+  def __init__(self, shield, dev):
+    self.shield = shield
+    self.dev = dev
 
-# Set pin modes to output
-for device, pin in pins.items():
-  GPIO.setup(pin, GPIO.OUT)
+  def on(self):
+    if self.shield.get_device_state(self.dev) == False:
+      self.shield.toggle_device_state(self.dev)
+    return True
+
+  def off(self):
+    if self.shield.get_device_state(self.dev) == True:
+      self.shield.toggle_device_state(self.dev)
+    return True
 
 # Setup serial connection to Arduino
 port=serial.Serial("/dev/ttyACM0", baudrate=9600, timeout=0.2)
 
-# Relay states (start "OFF")
-laststate = {"d1": False,
-  "d2": False,
-  "d3": False,
-  "d4": False}
-currstate = {"d1": False,
-  "d2": False,
-  "d3": False,
-  "d4": False}
-for device, pin in pins.items():
-  GPIO.output(pin, currstate[device])
-  
-print datetime.datetime.now(),"Starting universal remote"
+# Setup relay shield
+shield = relay_shield.GPIOPins()
+
+# Setup to respond to Alexa
+# Each entry contains [name, handler, port #].
+# Port number needs to be set for Alexa to find the device between power cycles,
+# but requires running as root
+
+fauxmo_devs = [
+  ['lights', local_gpio(shield, "ONE"), 100]
+]
+
+p = fauxmo.poller()
+u = fauxmo.upnp_broadcast_responder()
+u.init_socket()
+p.add(u)
+
+for one_faux in fauxmo_devs:
+  if len(one_faux) == 2:
+    # If no fixed port, use a dynamic one
+    one_faux.append(0)
+  switch = fauxmo.fauxmo(one_faux[0], u, p, None, one_faux[2], action_handler = one_faux[1])
 
 # Active loop
+print datetime.datetime.now(),"Starting universal remote"
+
 while True:
+  try:
+    # Poll fauxmo
+    p.poll(100)
 
-  # Check input
-  input=checkInput()
+    # Check input
+    input=checkInput()
 
-  # If motion, log activity
-  if input=="MOTION":
-    print datetime.datetime.now(),"Motion detected"
+    if input != "":
+      print datetime.datetime.now(),"Input detected: " + input
     
-  # If remote, analyze input
-  if input=="HOME":
-    print datetime.datetime.now(),"Input detected: Home"
-    for device in currstate:
-      currstate[device] = True
+      # If remote, analyze input
+      if input=="HOME":
+        pass
     
-  if input=="ONE":
-    print datetime.datetime.now(),"Input detected: Device 1"
-    currstate["d1"] = not laststate["d1"]
-    
-  if input=="TWO":
-    print datetime.datetime.now(),"Input detected: Device 2"
-    currstate["d2"] = not laststate["d2"]
+      if input in ["ONE", "TWO", "THREE", "FOUR"]:
+        shield.toggle_device_state(input)
 
-  if input=="THREE":
-    print datetime.datetime.now(),"Input detected: Device 3"
-    currstate["d3"] = not laststate["d3"]
-    
-  if input=="FOUR":
-    print datetime.datetime.now(),"Input detected: Device 4"
-    currstate["d4"] = not laststate["d4"]
-
-  # Check for state change
-  for device, state in currstate.items():
-    if currstate[device]!=laststate[device]:
-      print "Turning device",device,"to state",currstate[device]
-      laststate[device]=currstate[device]
-      GPIO.output(pins[device], currstate[device])
-
-  # Wait (tuned off because of serial timeout delay)
-  #time.sleep(poll_time)
-
-# Cleanup
-# GPIO.cleanup()
+  except Exception, e:
+    fauxmo.dbg(e)
+    break

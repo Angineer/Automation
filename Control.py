@@ -14,7 +14,7 @@ import time
 import datetime
 
 # Settings
-on_time = 30 # Time in seconds that the device stays on when triggered
+on_time = 5 # Time in seconds that the device stays on when triggered
 poll_time = 0.1 # Time in seconds between checking for inputs
 switch_pin = 4 # Relay control pin
 
