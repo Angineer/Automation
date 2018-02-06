@@ -23,7 +23,6 @@ class GPIOPins(object):
 
     # Set pin modes to output and start "OFF"
     for dev, info in self.devices.iteritems():
-      print(dev, info)
       pin = info["pin"]
       state = info["state"]
 
