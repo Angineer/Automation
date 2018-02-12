@@ -49,7 +49,8 @@ shield = relay_shield.GPIOPins()
 # but requires running as root
 
 fauxmo_devs = [
-  ['lights', local_gpio(shield, "ONE"), 100]
+  ['lights', local_gpio(shield, "ONE"), 100],
+  ['stereo', local_gpio(shield, "TWO"), 101]
 ]
 
 p = fauxmo.poller()
