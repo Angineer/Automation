@@ -1,6 +1,5 @@
-# Automation
+# Universal Remote
 
-A set of scripts for automating stuff around the home with Raspberry Pi, Arduino, and Amazon Alexa
+A set of scripts for controlling my Universal Remote project. See the details at www.adtme.com/projects/UniversalRemote.html.
 
-Alexa stuff borrows from
-- https://github.com/makermusings/fauxmo
+Code for interacting with Alexa comes from https://github.com/makermusings/fauxmo.
